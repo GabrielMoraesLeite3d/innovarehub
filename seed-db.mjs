@@ -335,9 +335,20 @@ async function seedDatabase() {
     // Seed Projects
     console.log('\n📋 Adicionando Projetos...');
     for (const project of PROJECTS) {
+      let mappedPhase = 'entrada_lead';
+      if (['entrada_lead', 'diagnostico', 'proposta', 'kickoff', 'conceito', 'producao', 'qa', 'pos_projeto'].includes(project.status)) {
+        mappedPhase = project.status;
+      }
+      const mappedStatus = 'em_andamento';
+      
+      let mappedPriority = 'media';
+      if (project.priority === 'high') mappedPriority = 'alta';
+      else if (project.priority === 'medium') mappedPriority = 'media';
+      else if (project.priority === 'low') mappedPriority = 'baixa';
+
       await sql`
         INSERT INTO projects ("name", "client", "status", "phase", "priority", "value", "responsibleId", "description") 
-        VALUES (${project.name}, ${project.client}, ${project.status}, ${project.phase}, ${project.priority}, ${project.value}, NULL, ${project.description})
+        VALUES (${project.name}, ${project.client}, ${mappedStatus}, ${mappedPhase}, ${mappedPriority}, ${project.value}, NULL, ${project.description})
       `;
     }
     console.log(`✓ ${PROJECTS.length} projetos adicionados`);
@@ -345,9 +356,13 @@ async function seedDatabase() {
     // Seed CRM Leads
     console.log('\n👥 Adicionando Leads...');
     for (const lead of LEADS) {
+      let mappedStatus = lead.status;
+      if (lead.status === 'briefing') mappedStatus = 'aguardando_briefing';
+      else if (lead.status === 'proposta') mappedStatus = 'proposta_enviada';
+      const contactInfo = lead.email ? `${lead.contact} (${lead.email})` : lead.contact;
       await sql`
-        INSERT INTO crm_leads ("name", "contact", "email", "status", "estimatedValue", "personInCharge", "description") 
-        VALUES (${lead.name}, ${lead.contact}, ${lead.email}, ${lead.status}, ${lead.value}, ${lead.responsible}, ${lead.diagnosis})
+        INSERT INTO crm_leads ("name", "contact", "status", "estimatedValue", "personInCharge", "description") 
+        VALUES (${lead.name}, ${contactInfo}, ${mappedStatus}, ${lead.value}, ${lead.responsible}, ${lead.diagnosis})
       `;
     }
     console.log(`✓ ${LEADS.length} leads adicionados`);
@@ -375,9 +390,11 @@ async function seedDatabase() {
     // Seed Rocket Missions
     console.log('\n🚀 Adicionando Missões Rocket...');
     for (const mission of ROCKET_MISSIONS) {
+      let mappedStatus = mission.status;
+      if (mission.status === 'em_andamento') mappedStatus = 'desenvolvimento';
       await sql`
         INSERT INTO rocket_missions ("name", "description", "status", "responsibleId", "dueDate", "category") 
-        VALUES (${mission.name}, ${mission.description}, ${mission.status}, NULL, ${mission.expectedEndDate ? new Date(mission.expectedEndDate) : null}, 'Geral')
+        VALUES (${mission.name}, ${mission.description}, ${mappedStatus}, NULL, ${mission.expectedEndDate ? new Date(mission.expectedEndDate) : null}, 'Geral')
       `;
     }
     console.log(`✓ ${ROCKET_MISSIONS.length} missões adicionadas`);
