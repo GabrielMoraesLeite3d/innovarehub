@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { 
   CalendarDays, CheckCircle2, ClipboardCheck, MessageSquare, Pencil, Plus, RocketIcon, Send, ShieldCheck, Target, ThumbsDown, ThumbsUp, UserRound, XCircle,
   Activity, BadgeCheck, BatteryCharging, Boxes, Box, Calculator, ChevronRight, CircuitBoard, Cpu, Download, Database, Gauge, GraduationCap, HeartHandshake,
-  Layers3, MousePointer2, PackageCheck, RadioTower, Rocket, Satellite, ShieldAlert, SlidersHorizontal, Sparkles, Wrench, Zap
+  Layers3, MousePointer2, PackageCheck, RadioTower, Satellite, ShieldAlert, SlidersHorizontal, Sparkles, Wrench, Zap
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode, type ChangeEvent, type FocusEvent } from 'react';
 import { toast } from 'sonner';
@@ -1948,7 +1948,7 @@ Este MVP é uma ferramenta educativa e de pré-dimensionamento. Não substitui O
 
   const assemblyItems: { id: ActivePart; label: string; detail: string; icon: any; state: "ok" | "warn" | "optional" }[] = [
     { id: "mission", label: "Missão", detail: `${config.mission.targetApogee} m alvo`, icon: Target, state: "ok" },
-    { id: "nose", label: "Coifa", detail: `${noseLabels[config.nose.type]} · ${config.nose.lengthMm} mm`, icon: Rocket, state: "ok" },
+    { id: "nose", label: "Coifa", detail: `${noseLabels[config.nose.type]} · ${config.nose.lengthMm} mm`, icon: RocketIcon, state: "ok" },
     { id: "body", label: "Tubo / corpo", detail: `${config.body.lengthMm} x Ø${config.body.outerDiameterMm} mm`, icon: Layers3, state: "ok" },
     { id: "transition", label: "Transição", detail: config.transition.enabled ? `${config.transition.lengthMm} mm ativa` : "opcional inativa", icon: Boxes, state: config.transition.enabled ? "ok" : "optional" },
     { id: "fins", label: "Aletas", detail: `${config.fins.count}x ${finLabels[config.fins.type]}`, icon: Gauge, state: simulation.stability < 1 ? "warn" : "ok" },
@@ -1988,7 +1988,7 @@ Este MVP é uma ferramenta educativa e de pré-dimensionamento. Não substitui O
       </ParamSection>;
     }
     if (activePart === "nose") {
-      return <ParamSection title="Coifa" kicker="nariz" icon={Rocket}>
+      return <ParamSection title="Coifa" kicker="nariz" icon={RocketIcon}>
         <SelectField<NoseType> label="Tipo de coifa" value={config.nose.type} options={noseLabels} onChange={(type) => update("nose", { type })} />
         <SelectField<MaterialKey> label="Material" value={config.nose.material} options={materialLabels} onChange={(material) => update("nose", { material })} />
         <NumberField label="Comprimento" unit="mm" value={config.nose.lengthMm} min={60} max={700} step={5} onChange={(lengthMm) => update("nose", { lengthMm })} />
@@ -2141,7 +2141,7 @@ Este MVP é uma ferramenta educativa e de pré-dimensionamento. Não substitui O
     }
     return <div className="export-stack cad-export">
       <Button onClick={exportProject} className="primary-cta"><Database size={16} /> Baixar JSON paramétrico</Button>
-      <Button onClick={exportOpenRocket} variant="outline" className="secondary-cta"><Rocket size={16} /> Exportar para OpenRocket (.ork)</Button>
+      <Button onClick={exportOpenRocket} variant="outline" className="secondary-cta"><RocketIcon size={16} /> Exportar para OpenRocket (.ork)</Button>
       <Button onClick={exportRocketPy} variant="outline" className="secondary-cta"><Cpu size={16} /> Exportar para RocketPy (.py)</Button>
       <Button onClick={exportCsv} variant="outline" className="secondary-cta"><Activity size={16} /> Baixar CSV da simulação</Button>
       <Button onClick={exportReport} variant="outline" className="secondary-cta"><ClipboardCheck size={16} /> Baixar relatório Markdown</Button>
@@ -2904,7 +2904,7 @@ Este MVP é uma ferramenta educativa e de pré-dimensionamento. Não substitui O
                 <button className={`ribbon-tab ${activePart === "export" ? "active" : ""}`} onClick={() => selectPart("export")}>Exportar</button>
               </div>
               <div className="ribbon-tools">
-                <Button onClick={() => insertComponent("nose")} className="cad-tool"><Rocket size={15} /> Coifa</Button>
+                <Button onClick={() => insertComponent("nose")} className="cad-tool"><RocketIcon size={15} /> Coifa</Button>
                 <Button onClick={() => insertComponent("body")} className="cad-tool"><Box size={15} /> Tubo</Button>
                 <Button onClick={() => insertComponent("fins")} className="cad-tool"><Gauge size={15} /> Aletas</Button>
                 <Button onClick={() => insertComponent("motor")} className="cad-tool"><Zap size={15} /> Motor</Button>
