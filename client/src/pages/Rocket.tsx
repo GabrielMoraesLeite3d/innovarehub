@@ -3034,6 +3034,7 @@ Este MVP é uma ferramenta educativa e de pré-dimensionamento. Não substitui O
             <footer className="footer-note cad-footer">
               <strong>Innovare Rocket MVP.</strong> Interface reorganizada como bancada CAD educativa: montagem à esquerda, viewport persistente ao centro e janela de propriedades à direita. Ferramenta de pré-dimensionamento; não substitui validação técnica, ensaios, normas ou autorização de lançamento.
             </footer>
+          </div>
         )}
 
         {isNozzleModalOpen && (() => {
