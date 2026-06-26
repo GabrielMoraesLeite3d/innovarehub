@@ -1,0 +1,1133 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+/*
+Design philosophy for this CAD extension: Neo-Brutalismo Técnico Aeroespacial aplicado a uma bancada de software 3D.
+Every selector below must reinforce a practical CAD workflow: árvore de montagem à esquerda, viewport persistente ao centro,
+janela de propriedades à direita, comandos compactos e leitura técnica imediata.
+*/
+
+.cad-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255, 75, 0, 0.20), transparent 28rem),
+    radial-gradient(circle at 90% 4%, rgba(0, 154, 166, 0.22), transparent 30rem),
+    linear-gradient(180deg, #05070a 0%, #071216 48%, #05070a 100%);
+}
+
+.cad-ribbon {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: minmax(230px, 0.85fr) auto minmax(420px, 2fr);
+  align-items: stretch;
+  min-height: 72px;
+  border-bottom: 1px solid rgba(25, 214, 223, 0.30);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 58%),
+    linear-gradient(100deg, #ff4b00 0%, #c93400 18%, #05070a 46%, #00666d 74%, #009aa6 100%);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38), inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+}
+
+.cad-brand {
+  padding: 0.85rem 1.1rem;
+  border-right: 1px solid rgba(247, 244, 238, 0.16);
+  background: linear-gradient(90deg, rgba(5, 7, 10, 0.08), rgba(5, 7, 10, 0.22));
+}
+
+.ribbon-tabs {
+  display: flex;
+  align-items: end;
+  gap: 0.18rem;
+  padding: 0.65rem 0.7rem 0;
+  border-right: 1px solid rgba(247, 244, 238, 0.12);
+}
+
+.ribbon-tab {
+  color: #cedee2;
+  background: rgba(247, 244, 238, 0.06);
+  border: 1px solid rgba(247, 244, 238, 0.12);
+  border-bottom: 0;
+  padding: 0.72rem 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.ribbon-tab.active {
+  background: #f7f4ee;
+  color: #05070a;
+  font-weight: 900;
+  box-shadow: inset 0 4px 0 #ff4b00;
+}
+
+.ribbon-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.48rem;
+  padding: 0.7rem 1rem;
+}
+
+.cad-tool {
+  border-radius: 0 !important;
+  border: 1px solid rgba(0, 154, 166, 0.45) !important;
+  background: rgba(8, 14, 18, 0.78) !important;
+  color: #eaf9fb !important;
+  min-height: 38px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem !important;
+}
+
+.cad-tool:hover,
+.viewport-actions button:hover,
+.browser-actions button:hover {
+  transform: translateY(-1px);
+  border-color: #ff4b00 !important;
+}
+
+.cad-presets {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.62rem 1rem;
+  border-bottom: 1px solid rgba(0, 154, 166, 0.18);
+  background: linear-gradient(90deg, rgba(255, 75, 0, 0.10), rgba(7, 18, 22, 0.82) 38%, rgba(0, 154, 166, 0.10));
+}
+
+.preset-chips {
+  display: flex;
+  gap: 0.55rem;
+  overflow-x: auto;
+  scrollbar-color: #009aa6 #061114;
+  padding-bottom: 0.1rem;
+}
+
+.preset-chip {
+  min-width: 210px;
+  color: #dcebef;
+  background: linear-gradient(180deg, rgba(14, 23, 29, 0.96), rgba(8, 14, 18, 0.96));
+  border: 1px solid rgba(247, 244, 238, 0.12);
+  padding: 0.55rem 0.72rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.preset-chip strong,
+.preset-chip small {
+  display: block;
+}
+
+.preset-chip strong {
+  font-family: "Space Grotesk", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.preset-chip small {
+  color: #91a9ae;
+  margin-top: 0.22rem;
+  font-size: 0.66rem;
+}
+
+.preset-chip.active {
+  border-color: #ff4b00;
+  box-shadow: inset 4px 0 0 #ff4b00, 0 0 0 1px rgba(255, 75, 0, 0.18);
+}
+
+.cad-workspace {
+  display: grid;
+  grid-template-columns: minmax(255px, 310px) minmax(420px, 1fr) minmax(320px, 410px);
+  gap: 0;
+  min-height: calc(100vh - 132px);
+  border-bottom: 1px solid rgba(247, 244, 238, 0.1);
+}
+
+.assembly-browser,
+.property-inspector {
+  background:
+    linear-gradient(180deg, rgba(255, 75, 0, 0.055), transparent 18rem),
+    linear-gradient(180deg, rgba(15, 23, 31, 0.98), rgba(5, 7, 10, 0.98));
+  border-right: 1px solid rgba(247, 244, 238, 0.12);
+  min-height: 100%;
+}
+
+.property-inspector {
+  border-right: 0;
+  border-left: 1px solid rgba(247, 244, 238, 0.12);
+}
+
+.browser-title,
+.inspector-header {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(247, 244, 238, 0.12);
+}
+
+.browser-title h2,
+.inspector-header h2,
+.viewport-toolbar h1 {
+  margin: 0.38rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.browser-title p,
+.inspector-header p {
+  color: #aebfc4;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  margin: 0.55rem 0 0;
+}
+
+.tree-root {
+  padding: 0.75rem;
+}
+
+.tree-project,
+.tree-node,
+.browser-actions button,
+.viewport-actions button {
+  width: 100%;
+  color: #e9f3f5;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tree-project {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem;
+  color: #f7f4ee;
+  font-size: 0.76rem;
+  border: 1px dashed rgba(0, 154, 166, 0.32);
+  margin-bottom: 0.5rem;
+}
+
+.tree-node {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 0.58rem;
+  align-items: start;
+  padding: 0.55rem 0.6rem 0.55rem 1.05rem;
+  border-left: 1px solid rgba(122, 146, 154, 0.32);
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.tree-node::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.15rem;
+  width: 0.7rem;
+  height: 1px;
+  background: rgba(122, 146, 154, 0.44);
+}
+
+.tree-node.active {
+  background: rgba(0, 154, 166, 0.12);
+  border-color: #009aa6;
+  box-shadow: inset 3px 0 0 #009aa6;
+}
+
+.tree-node.state-warn {
+  box-shadow: inset 3px 0 0 #ffc247;
+}
+
+.tree-node.state-optional {
+  opacity: 0.76;
+}
+
+.tree-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(247, 244, 238, 0.08);
+  border: 1px solid rgba(247, 244, 238, 0.12);
+}
+
+.tree-node strong,
+.tree-node small {
+  display: block;
+}
+
+.tree-node strong {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tree-node small {
+  margin-top: 0.18rem;
+  color: #98aeb4;
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.browser-actions {
+  display: grid;
+  gap: 0.42rem;
+  padding: 0.75rem;
+  border-top: 1px solid rgba(247, 244, 238, 0.1);
+}
+
+.browser-actions button,
+.viewport-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  border: 1px solid rgba(247, 244, 238, 0.12);
+  background: rgba(8, 14, 18, 0.72);
+  padding: 0.62rem 0.7rem;
+  color: #dcebef;
+  transition: transform 150ms ease, border-color 150ms ease;
+}
+
+.viewport-column {
+  position: relative;
+  min-width: 0;
+  background:
+    linear-gradient(rgba(0, 154, 166, 0.052) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 154, 166, 0.052) 1px, transparent 1px),
+    radial-gradient(circle at 18% 4%, rgba(255, 75, 0, 0.09), transparent 22rem),
+    radial-gradient(circle at 88% 20%, rgba(0, 154, 166, 0.10), transparent 24rem),
+    #f7f4ee;
+  background-size: 44px 44px, 44px 44px, auto, auto;
+  color: #061114;
+}
+
+.viewport-toolbar {
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.05rem;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(247, 244, 238, 0.92));
+  border-bottom: 1px solid rgba(8, 14, 18, 0.12);
+}
+
+.viewport-toolbar .section-kicker {
+  color: #007b83;
+}
+
+.viewport-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.viewport-actions button {
+  width: auto;
+  color: #061114;
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(8, 14, 18, 0.14);
+}
+
+.cad-viewport {
+  position: relative;
+  min-height: min(62vh, 680px);
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 3vw, 2rem);
+  overflow: hidden;
+}
+
+.cad-viewport .rocket-preview {
+  width: min(96%, 980px);
+  filter: drop-shadow(0 26px 42px rgba(10, 16, 20, 0.2));
+}
+
+.viewport-overlay,
+.view-cube {
+  position: absolute;
+  z-index: 3;
+  background: rgba(255, 255, 255, 0.78);
+  color: #061114;
+  border: 1px solid rgba(8, 14, 18, 0.14);
+  box-shadow: 8px 8px 0 rgba(8, 14, 18, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.viewport-overlay.top-left {
+  top: 1rem;
+  left: 1rem;
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.65rem 0.8rem;
+}
+
+.viewport-overlay strong {
+  color: #ff4b00;
+  text-transform: uppercase;
+}
+
+.viewport-overlay span {
+  font-size: 0.72rem;
+  color: #33454b;
+}
+
+.view-cube {
+  right: 1rem;
+  top: 1rem;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  transform: rotate(-8deg);
+}
+
+.view-cube span {
+  display: block;
+  margin-top: 0.18rem;
+  color: #007b83;
+  font-size: 0.62rem;
+}
+
+.status-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  padding: 0.85rem;
+  background: rgba(7, 16, 20, 0.92);
+  border-top: 1px solid rgba(8, 14, 18, 0.18);
+}
+
+.property-inspector {
+  overflow: hidden;
+}
+
+.inspector-window {
+  height: calc(100vh - 236px);
+  overflow-y: auto;
+  padding: 0.85rem;
+  scrollbar-color: #009aa6 #061114;
+}
+
+.inspector-window .param-section {
+  margin: 0;
+  background: rgba(8, 14, 18, 0.82);
+  border-color: rgba(0, 154, 166, 0.22);
+  box-shadow: none;
+}
+
+.inspector-stack,
+.cad-export {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.compact-list article {
+  padding: 0.85rem;
+}
+
+.cad-analysis {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(260px, 0.7fr);
+  gap: 1rem;
+  padding: 1rem;
+  background: #05070a;
+}
+
+.cad-analysis .technical-panel {
+  margin: 0;
+}
+
+.cad-footer {
+  margin: 0;
+  border-top: 1px solid rgba(247, 244, 238, 0.12);
+}
+
+@media (max-width: 1320px) {
+  .cad-ribbon {
+    grid-template-columns: 1fr;
+  }
+
+  .cad-brand,
+  .ribbon-tabs {
+    border-right: 0;
+    border-bottom: 1px solid rgba(247, 244, 238, 0.1);
+  }
+
+  .ribbon-tools {
+    justify-content: flex-start;
+  }
+
+  .cad-workspace {
+    grid-template-columns: 270px minmax(0, 1fr);
+  }
+
+  .property-inspector {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid rgba(247, 244, 238, 0.12);
+  }
+
+  .inspector-window {
+    height: auto;
+    max-height: 520px;
+  }
+}
+
+@media (max-width: 900px) {
+  .cad-presets,
+  .cad-workspace,
+  .cad-analysis {
+    grid-template-columns: 1fr;
+  }
+
+  .assembly-browser,
+  .property-inspector {
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .cad-viewport {
+    min-height: 460px;
+  }
+
+  .status-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .viewport-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .status-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .ribbon-tools,
+  .viewport-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cad-tool,
+  .viewport-actions button {
+    width: 100%;
+  }
+}
+
+/* Refinamento solicitado: propriedades como janela de software 3D, sem perder a viewport do foguete. */
+@media (min-width: 901px) {
+  .cad-workspace {
+    position: relative;
+    grid-template-columns: minmax(255px, 300px) minmax(0, 1fr) !important;
+  }
+
+  .property-inspector {
+    position: absolute !important;
+    top: 1rem;
+    right: 1rem;
+    z-index: 30;
+    width: min(410px, calc(100vw - 340px));
+    max-height: calc(100vh - 182px);
+    border: 1px solid rgba(0, 154, 166, 0.34) !important;
+    background: linear-gradient(180deg, rgba(21, 31, 40, 0.95), rgba(7, 13, 18, 0.96));
+    box-shadow: 16px 20px 0 rgba(5, 8, 10, 0.22), 0 24px 70px rgba(0, 0, 0, 0.36);
+    backdrop-filter: blur(20px);
+  }
+
+  .property-inspector::before {
+    content: "JANELA DE PROPRIEDADES";
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    padding: 0.32rem 0.56rem;
+    background: #009aa6;
+    color: #041014;
+    font-size: 0.58rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+  }
+
+  .inspector-window {
+    height: auto !important;
+    max-height: calc(100vh - 342px);
+    overflow-y: auto;
+  }
+
+  .cad-viewport {
+    padding-right: min(31rem, 36vw);
+  }
+
+  .cad-viewport .rocket-preview {
+    transform: translateX(-3.5vw);
+  }
+
+  .status-strip {
+    padding-right: min(31rem, 36vw);
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1180px) {
+  .property-inspector {
+    width: min(360px, calc(100vw - 315px));
+  }
+
+  .cad-viewport {
+    padding-right: min(24rem, 34vw);
+  }
+
+  .status-strip {
+    padding-right: min(24rem, 34vw);
+  }
+}
+
+/*
+Design philosophy for this file extension: Neo-Brutalismo Técnico Aeroespacial aplicado a uma viewport CAD mais refinada.
+A prévia do foguete deve reforçar precisão, corte técnico, contraste e leitura de componentes internos sem parecer ilustração improvisada.
+*/
+.rocket-preview {
+  border-radius: 18px;
+  border: 1px solid rgba(25, 214, 223, 0.24);
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 194, 71, 0.08), transparent 18rem),
+    radial-gradient(circle at 78% 36%, rgba(0, 154, 166, 0.16), transparent 21rem),
+    linear-gradient(135deg, rgba(5, 9, 13, 0.98), rgba(10, 20, 25, 0.92) 48%, rgba(2, 7, 10, 0.98));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -26px 70px rgba(0, 0, 0, 0.22),
+    0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.rocket-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg, transparent 0 34%, rgba(255, 255, 255, 0.055) 42%, transparent 53%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 5px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.preview-grid {
+  background-image:
+    linear-gradient(rgba(25, 214, 223, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(25, 214, 223, 0.12) 1px, transparent 1px),
+    linear-gradient(rgba(255, 194, 71, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 194, 71, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px, 28px 28px, 112px 112px, 112px 112px;
+  opacity: 0.7;
+}
+
+.rocket-preview svg {
+  z-index: 2;
+  overflow: visible;
+}
+
+.internal-module {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.28));
+}
+
+.motor-pack {
+  filter: drop-shadow(0 0 14px rgba(255, 106, 0, 0.16));
+}
+
+.cad-callouts text,
+.dimension-line text {
+  paint-order: stroke;
+  stroke: rgba(5, 9, 13, 0.86);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.dimension-line line,
+.cad-callouts line {
+  vector-effect: non-scaling-stroke;
+}
+
+.cad-viewport .rocket-preview {
+  width: min(98%, 1050px);
+  transform-origin: center;
+}
+
+@media (max-width: 920px) {
+  .rocket-preview svg {
+    min-height: 300px;
+  }
+}
+
+/*
+Design philosophy for this file: Neo-Brutalismo Técnico Aeroespacial.
+This block reinforces the motor-inspection tab as a mission-lab instrument: dark graphite housing, cyan telemetry strokes,
+orange thermal emphasis, compact engineering readouts and a handcrafted CAD-like cutaway.
+*/
+.motor-cutaway {
+  grid-column: 1 / -1;
+  padding: 0.65rem;
+  border: 1px solid rgba(25, 214, 223, 0.22);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(25, 214, 223, 0.12), transparent 12rem),
+    linear-gradient(135deg, rgba(4, 8, 12, 0.96), rgba(10, 19, 24, 0.92));
+  box-shadow: inset 0 0 28px rgba(0, 154, 166, 0.08), 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.motor-cutaway svg {
+  display: block;
+  width: 100%;
+  min-height: 190px;
+}
+
+.motor-derived-panel {
+  padding: 0.85rem;
+  border: 1px solid rgba(255, 194, 71, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(17, 25, 31, 0.92), rgba(7, 12, 16, 0.98)),
+    repeating-linear-gradient(90deg, rgba(25, 214, 223, 0.04) 0 1px, transparent 1px 34px);
+}
+
+.motor-derived-panel header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+  color: #ffc247;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.motor-derived-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.72rem;
+}
+
+.motor-derived-grid .metric-card {
+  min-height: 104px;
+  background: rgba(5, 8, 10, 0.66);
+}
+
+.motor-derived-panel p {
+  margin: 0.85rem 0 0;
+  color: #aebfc4;
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .motor-derived-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Design philosophy for this file: Neo-Brutalismo Técnico Aeroespacial.
+   The automatic mass controls must look like calibrated lab readouts: graphite panels, cyan estimation telemetry,
+   orange manual override emphasis, monospaced numeric hierarchy and compact technical explanations. */
+.mass-control {
+  position: relative;
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(25, 214, 223, 0.24);
+  background:
+    linear-gradient(135deg, rgba(10, 22, 27, 0.92), rgba(14, 18, 23, 0.86)),
+    repeating-linear-gradient(90deg, rgba(25, 214, 223, 0.055) 0, rgba(25, 214, 223, 0.055) 1px, transparent 1px, transparent 24px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035), 0 18px 42px rgba(0, 0, 0, 0.22);
+}
+
+.mass-control::before {
+  content: "AUTO MASS";
+  position: absolute;
+  top: -0.58rem;
+  right: 0.85rem;
+  padding: 0.12rem 0.42rem;
+  background: #101820;
+  color: #19d6df;
+  border: 1px solid rgba(25, 214, 223, 0.35);
+  font: 700 0.57rem/1 var(--font-mono);
+  letter-spacing: 0.12em;
+}
+
+.mass-mode-manual {
+  border-color: rgba(255, 106, 0, 0.5);
+  background:
+    linear-gradient(135deg, rgba(36, 20, 13, 0.88), rgba(14, 18, 23, 0.9)),
+    repeating-linear-gradient(90deg, rgba(255, 106, 0, 0.065) 0, rgba(255, 106, 0, 0.065) 1px, transparent 1px, transparent 24px);
+}
+
+.mass-mode-manual::before {
+  content: "MANUAL OVERRIDE";
+  color: #ffc247;
+  border-color: rgba(255, 194, 71, 0.4);
+}
+
+.mass-control-head,
+.mass-control-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.mass-control-head span {
+  color: rgba(247, 244, 238, 0.78);
+  font: 700 0.72rem/1.25 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mass-control-head strong {
+  color: #f7f4ee;
+  font: 800 clamp(1.28rem, 2vw, 1.85rem)/0.95 var(--font-display);
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+.mass-control-body {
+  display: grid;
+  justify-items: start;
+  gap: 0.28rem;
+}
+
+.mass-control-body span {
+  color: #19d6df;
+  font: 800 0.72rem/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mass-mode-manual .mass-control-body span {
+  color: #ffc247;
+}
+
+.mass-control-body small {
+  color: rgba(247, 244, 238, 0.62);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.mass-control .toggle-field {
+  border-color: rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.mass-control .param-field {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 194, 71, 0.28);
+}
+
+/* Identidade aplicada: Innovare Rocket. A logo enviada pelo usuário foi preparada como PNG transparente e recolorida para manter legibilidade sobre o ribbon escuro. */
+.innovare-logo {
+  width: 4.15rem;
+  height: 2.15rem;
+  flex: 0 0 auto;
+  object-fit: contain;
+  object-position: center;
+  filter: brightness(1.22) contrast(1.08) drop-shadow(0 0 16px rgba(255, 255, 255, 0.22));
+}
+
+.brand-copy {
+  display: grid !important;
+  place-items: initial !important;
+  width: auto !important;
+  height: auto !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.brand-copy small {
+  margin-top: 0.12rem;
+  color: rgba(183, 198, 201, 0.78);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rocket-preview-3d {
+  perspective: 920px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -70px 120px rgba(5, 9, 13, 0.58),
+    0 24px 70px rgba(0, 0, 0, 0.22);
+}
+
+.rocket-preview-3d svg {
+  min-height: 390px;
+}
+
+.axonometric-stage {
+  transform-box: fill-box;
+  transform-origin: center;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.24));
+}
+
+.rocket-depth-layer {
+  mix-blend-mode: screen;
+}
+
+.viewport-3d-label text {
+  paint-order: stroke;
+  stroke: rgba(5, 9, 13, 0.92);
+  stroke-width: 2.4px;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 920px) {
+  .innovare-logo {
+    width: 3.6rem;
+    height: 1.9rem;
+  }
+
+  .rocket-preview-3d svg {
+    min-height: 330px;
+  }
+}
+
+/* Correção de contraste da assinatura de marca: o nome precisa permanecer legível sobre o ribbon escuro. */
+.brand-copy strong {
+  color: #f7f4ee !important;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.16);
+}
+
+.cad-brand:hover .brand-copy strong,
+.cad-brand:focus-visible .brand-copy strong {
+  color: #19d6df !important;
+}
+
+/*
+Design philosophy for this file extension: Innovare Rocket · CAD limpo e nítido.
+Este bloco corrige o excesso visual apontado pelo usuário: menos blur, menos linhas decorativas, bordas mais precisas e leitura técnica objetiva.
+*/
+.cad-shell {
+  background: linear-gradient(180deg, #05070a 0%, #071216 48%, #05070a 100%);
+}
+
+.cad-ribbon,
+.topbar,
+.property-inspector,
+.viewport-overlay,
+.view-cube {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.cad-ribbon {
+  background: linear-gradient(100deg, #ff4b00 0%, #c93400 18%, #05070a 45%, #00666d 76%, #009aa6 100%);
+  box-shadow: none;
+}
+
+.cad-brand,
+.ribbon-tabs,
+.cad-presets,
+.browser-title,
+.inspector-header,
+.browser-actions,
+.cad-footer,
+.status-strip,
+.viewport-toolbar {
+  border-color: rgba(25, 214, 223, 0.18) !important;
+}
+
+.cad-presets {
+  background: #071216;
+}
+
+.preset-chip,
+.assembly-browser,
+.property-inspector,
+.inspector-window .param-section,
+.motor-cutaway,
+.motor-derived-panel,
+.param-section,
+.technical-panel,
+.metric-card {
+  box-shadow: none !important;
+}
+
+.assembly-browser,
+.property-inspector {
+  background: #070d11;
+}
+
+@media (min-width: 901px) {
+  .property-inspector {
+    background: #071014 !important;
+    border-color: rgba(25, 214, 223, 0.34) !important;
+    box-shadow: 0 0 0 1px rgba(5, 7, 10, 0.92) !important;
+  }
+
+  .cad-viewport {
+    padding-right: min(29rem, 34vw);
+  }
+}
+
+.viewport-column {
+  background:
+    linear-gradient(180deg, #fbf8f1 0%, #f1ede4 100%) !important;
+  color: #061114;
+}
+
+.viewport-toolbar {
+  background: #fbf8f1 !important;
+}
+
+.cad-viewport {
+  background: #fbf8f1;
+}
+
+.cad-viewport .rocket-preview {
+  filter: none !important;
+}
+
+.rocket-preview {
+  border-radius: 12px;
+  border: 1px solid rgba(25, 214, 223, 0.28);
+  background: #071216 !important;
+  box-shadow: 0 8px 18px rgba(5, 7, 10, 0.18) !important;
+}
+
+.rocket-preview::before {
+  background: none !important;
+}
+
+.preview-grid {
+  background-image:
+    linear-gradient(rgba(25, 214, 223, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(25, 214, 223, 0.055) 1px, transparent 1px) !important;
+  background-size: 96px 96px !important;
+  opacity: 0.42 !important;
+}
+
+.internal-module,
+.motor-pack {
+  filter: none !important;
+}
+
+.viewport-overlay,
+.view-cube {
+  background: #fbf8f1 !important;
+  border-color: rgba(8, 14, 18, 0.16) !important;
+  box-shadow: none !important;
+}
+
+.tree-node::before {
+  opacity: 0.42;
+}
+
+.tree-node {
+  border-left-color: rgba(122, 146, 154, 0.18);
+}
+
+.image-card::before,
+.hero::before {
+  opacity: 0.35;
+}
+
+/* Refinamento adicional: remover ruído técnico decorativo que estava competindo com o desenho do foguete. */
+.property-inspector::before,
+.mass-control::before,
+.mass-mode-manual::before,
+.param-section::after,
+.technical-panel::after {
+  content: none !important;
+  display: none !important;
+}
+
+.hero::before,
+.image-card::before {
+  background-image: none !important;
+  mask-image: none !important;
+}
+
+.rocket-preview svg {
+  filter: none !important;
+  shape-rendering: geometricPrecision;
+  text-rendering: geometricPrecision;
+}
+
+.rocket-depth-layer {
+  opacity: 0.82;
+}
+
+.cad-callouts line,
+.dimension-line line {
+  vector-effect: non-scaling-stroke;
+}
+
+.motor-derived-panel,
+.mass-control,
+.mass-mode-auto,
+.mass-mode-manual {
+  background-image: none !important;
+}
+
+.param-section,
+.technical-panel,
+.motor-derived-panel,
+.mass-control {
+  border-color: rgba(25, 214, 223, 0.18) !important;
+}
+
+.tree-node::before {
+  border-left-color: rgba(122, 146, 154, 0.24) !important;
+  border-bottom-color: rgba(122, 146, 154, 0.24) !important;
+}
+
+/* Evita que controles superiores do viewport fiquem visualmente cortados pelo painel de propriedades fixo. */
+@media (min-width: 901px) {
+  .viewport-toolbar {
+    padding-right: min(29rem, 34vw) !important;
+  }
+}
+
+/* Correção emergencial do viewport: a visualização atual deve ser um corte lateral técnico limpo, sem falso 3D, sombra duplicada ou linhas de sobreposição. */
+.rocket-preview-cutaway {
+  perspective: none !important;
+  box-shadow: 0 6px 12px rgba(5, 7, 10, 0.14) !important;
+}
+
+.rocket-preview-cutaway .preview-grid {
+  display: none !important;
+}
+
+.rocket-preview-cutaway svg {
+  min-height: 390px;
+}
+
+.rocket-preview-cutaway .rocket-depth-layer,
+.rocket-preview-cutaway .axonometric-stage {
+  display: none !important;
+}
+
+.viewport-mode-label text {
+  paint-order: stroke;
+  stroke: rgba(5, 9, 13, 0.92);
+  stroke-width: 2.2px;
+  letter-spacing: 0.035em;
+}
+
+.view-cube {
+  font-family: "IBM Plex Mono", monospace;
+}
