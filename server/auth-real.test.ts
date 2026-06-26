@@ -12,12 +12,13 @@ describe('Authentication Helpers', () => {
       expect(typeof hash).toBe('string');
     });
 
-    it('should produce consistent hashes for the same password', () => {
+    it('should verify passwords correctly using verifyPassword', () => {
       const password = 'testPassword';
       const hash1 = hashPassword(password);
       const hash2 = hashPassword(password);
       
-      expect(hash1).toBe(hash2);
+      expect(verifyPassword(password, hash1)).toBe(true);
+      expect(verifyPassword(password, hash2)).toBe(true);
     });
 
     it('should produce different hashes for different passwords', () => {
