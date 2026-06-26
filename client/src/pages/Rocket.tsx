@@ -1578,8 +1578,8 @@ function subsystemNumericId(subsystemId: string) {
 
 function getInsertId(result: unknown) {
   if (!result || typeof result !== 'object') return undefined;
-  const candidate = result as { insertId?: number; data?: { insertId?: number } };
-  return candidate.insertId ?? candidate.data?.insertId;
+  const candidate = result as { insertId?: number; data?: { insertId?: number; id?: number }; id?: number };
+  return candidate.insertId ?? candidate.id ?? candidate.data?.insertId ?? candidate.data?.id;
 }
 
 const LASC_TIMELINE = [

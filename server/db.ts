@@ -1,5 +1,6 @@
 import { desc, eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { InsertUser, users, projects, crmLeads, crmInteractions, commissions, financials, resources, trainings, pnd, rocketMissions, competencies, localUsers, LocalUser, InsertLocalUser, InsertProject, projectTasks, InsertProjectTask, InsertCrmLead, InsertCrmInteraction, InsertCommission, InsertFinancial, InsertResource, InsertResourceAssignment, resourceAssignments, events, eventParticipants, InsertEvent, InsertEventParticipant, InsertRocketMission, rocketSubsystems, rocketMessages, rocketTasks } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { hashPassword, verifyPassword } from './auth-helpers';
@@ -16,7 +17,8 @@ export function __resetDbForTests() {
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const client = postgres(process.env.DATABASE_URL);
+      _db = drizzle(client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -75,7 +77,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
+    await db.insert(users).values(values).onConflictDoUpdate({
+      target: users.openId,
       set: updateSet,
     });
   } catch (error) {
@@ -143,8 +146,7 @@ export async function createProject(input: CreateProjectInput) {
     throw new Error('Banco de dados indisponível para criar projeto.');
   }
 
-  await db.insert(projects).values(values);
-  const created = await db.select().from(projects).where(eq(projects.name, values.name)).limit(1);
+  const created = await db.insert(projects).values(values).returning();
   if (!created[0]) {
     throw new Error('Projeto criado, mas não foi possível confirmar a leitura no banco.');
   }
@@ -225,8 +227,7 @@ export async function createProjectTask(input: CreateProjectTaskInput) {
     throw new Error('Banco de dados indisponível para criar tarefa de projeto.');
   }
 
-  await db.insert(projectTasks).values(values);
-  const created = await db.select().from(projectTasks).where(eq(projectTasks.title, values.title)).orderBy(desc(projectTasks.createdAt)).limit(1);
+  const created = await db.insert(projectTasks).values(values).returning();
   if (!created[0]) {
     throw new Error('Tarefa criada, mas não foi possível confirmar a leitura no banco.');
   }
@@ -308,8 +309,7 @@ export async function createCrmLead(input: CreateCrmLeadInput) {
     throw new Error('Banco de dados indisponível para criar lead CRM.');
   }
 
-  await db.insert(crmLeads).values(values);
-  const created = await db.select().from(crmLeads).where(eq(crmLeads.name, values.name)).orderBy(desc(crmLeads.createdAt)).limit(1);
+  const created = await db.insert(crmLeads).values(values).returning();
   if (!created[0]) {
     throw new Error('Lead criado, mas não foi possível confirmar a leitura no banco.');
   }
@@ -411,8 +411,7 @@ export async function createCrmInteraction(input: CreateCrmInteractionInput) {
     throw new Error('Banco de dados indisponível para registrar interação CRM.');
   }
 
-  await db.insert(crmInteractions).values(values);
-  const created = await db.select().from(crmInteractions).where(eq(crmInteractions.leadId, input.leadId)).orderBy(desc(crmInteractions.createdAt)).limit(1);
+  const created = await db.insert(crmInteractions).values(values).returning();
   if (!created[0]) {
     throw new Error('Interação registrada, mas não foi possível confirmar a leitura no banco.');
   }
@@ -441,8 +440,7 @@ export async function createCrmCommission(input: CreateCrmCommissionInput) {
     throw new Error('Banco de dados indisponível para registrar comissão CRM.');
   }
 
-  await db.insert(commissions).values(values);
-  const created = await db.select().from(commissions).where(eq(commissions.leadId, input.leadId)).orderBy(desc(commissions.createdAt)).limit(1);
+  const created = await db.insert(commissions).values(values).returning();
   if (!created[0]) {
     throw new Error('Comissão registrada, mas não foi possível confirmar a leitura no banco.');
   }
@@ -486,14 +484,9 @@ export async function createFinancial(input: CreateFinancialInput) {
     notes: input.notes || null,
   };
 
-  const result = await db.insert(financials).values(values);
-  const insertId = Number((result as any)[0]?.insertId || (result as any).insertId || 0);
-  if (insertId) {
-    const created = await db.select().from(financials).where(eq(financials.id, insertId)).limit(1);
-    if (created[0]) return created[0];
-  }
-  const latest = await db.select().from(financials).orderBy(desc(financials.createdAt)).limit(1);
-  return latest[0] || values;
+  const created = await db.insert(financials).values(values).returning();
+  if (created[0]) return created[0];
+  return values;
 }
 
 export async function updateFinancialStatus(input: { id: number; status: InsertFinancial['status'] }) {
@@ -556,8 +549,7 @@ export async function createResource(input: CreateResourceInput) {
     throw new Error('Banco de dados indisponível para criar recurso.');
   }
 
-  await db.insert(resources).values(values);
-  const created = await db.select().from(resources).where(eq(resources.name, values.name)).orderBy(desc(resources.createdAt)).limit(1);
+  const created = await db.insert(resources).values(values).returning();
   if (!created[0]) {
     throw new Error('Recurso criado, mas não foi possível confirmar a leitura no banco.');
   }
@@ -644,10 +636,9 @@ export async function createResourceAssignment(input: CreateResourceAssignmentIn
     throw new Error('Banco de dados indisponível para agendar recurso.');
   }
 
-  await db.insert(resourceAssignments).values(values);
+  const created = await db.insert(resourceAssignments).values(values).returning();
   await db.update(resources).set({ status: 'em_uso', lastUsage: new Date() }).where(eq(resources.id, input.resourceId));
 
-  const created = await db.select().from(resourceAssignments).where(eq(resourceAssignments.resourceId, input.resourceId)).orderBy(desc(resourceAssignments.createdAt)).limit(1);
   if (!created[0]) {
     throw new Error('Agendamento criado, mas não foi possível confirmar a leitura no banco.');
   }
@@ -704,8 +695,7 @@ export async function createEvent(input: CreateEventInput) {
     throw new Error('Banco de dados indisponível para criar evento.');
   }
 
-  await db.insert(events).values(values);
-  const created = await db.select().from(events).where(eq(events.title, values.title)).orderBy(desc(events.createdAt)).limit(1);
+  const created = await db.insert(events).values(values).returning();
   if (!created[0]) {
     throw new Error('Evento criado, mas não foi possível confirmar a leitura no banco.');
   }
@@ -773,8 +763,7 @@ export async function addEventParticipant(input: AddEventParticipantInput) {
     userId: input.userId,
     status: input.status ?? 'convidado',
   };
-  await db.insert(eventParticipants).values(values);
-  const created = await db.select().from(eventParticipants).where(eq(eventParticipants.eventId, input.eventId)).orderBy(desc(eventParticipants.createdAt)).limit(1);
+  const created = await db.insert(eventParticipants).values(values).returning();
   if (!created[0]) {
     throw new Error('Participante adicionado, mas não foi possível confirmar a leitura no banco.');
   }
@@ -848,8 +837,7 @@ export async function createRocketMission(input: CreateRocketMissionInput) {
     dueDate: input.dueDate ?? null,
   };
 
-  await db.insert(rocketMissions).values(values);
-  const created = await db.select().from(rocketMissions).orderBy(desc(rocketMissions.createdAt)).limit(1);
+  const created = await db.insert(rocketMissions).values(values).returning();
   if (!created[0]) {
     throw new Error('Missão Rocket criada, mas não foi possível confirmar a leitura no banco.');
   }
@@ -904,17 +892,15 @@ export async function createLocalUser(input: { email: string; password: string; 
 
   try {
     const passwordHash = hashPassword(input.password);
-    const result = await db.insert(localUsers).values({
+    const created = await db.insert(localUsers).values({
       email: input.email,
       passwordHash,
       name: input.name,
       teamType: input.teamType,
       role: input.role || 'user',
       isActive: 1,
-    });
+    }).returning();
 
-    // Fetch and return the created user
-    const created = await db.select().from(localUsers).where(eq(localUsers.email, input.email)).limit(1);
     return created.length > 0 ? created[0] : null;
   } catch (error) {
     console.error('[Database] Failed to create local user:', error);
@@ -1017,8 +1003,8 @@ export async function createRocketMessage(subsystemId: number, userId: number, c
       userId,
       content,
       messageType,
-    });
-    return result;
+    }).returning();
+    return result.length > 0 ? result[0] : null;
   } catch (error) {
     console.error('[Database] Failed to create rocket message:', error);
     return null;
@@ -1099,8 +1085,8 @@ export async function createRocketTask(subsystemId: number, title: string, descr
       assignedToId,
       priority,
       dueDate,
-    });
-    return result;
+    }).returning();
+    return result.length > 0 ? result[0] : null;
   } catch (error) {
     console.error('[Database] Failed to create rocket task:', error);
     return null;

@@ -1,11 +1,6 @@
-import mysql from 'mysql2/promise';
+import postgres from 'postgres';
 
-const config = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'innovare_os',
-};
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/innovare_os';
 
 const COLLABORATORS = [
   { name: 'Gabriel', role: 'CEO', email: 'gabriel@innovare.com' },
@@ -328,78 +323,82 @@ const TRAININGS = [
 ];
 
 async function seedDatabase() {
-  let connection;
+  if (!process.env.DATABASE_URL) {
+    console.warn('⚠️  Nenhuma DATABASE_URL definida no ambiente. Usando fallback local para conexão.');
+  }
+
+  const sql = postgres(connectionString);
+
   try {
-    connection = await mysql.createConnection(config);
-    console.log('✓ Conectado ao banco de dados');
+    console.log('✓ Conectado ao banco de dados PostgreSQL');
 
     // Seed Projects
     console.log('\n📋 Adicionando Projetos...');
     for (const project of PROJECTS) {
-      await connection.execute(
-        'INSERT INTO projects (name, client, status, phase, priority, value, responsible, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [project.name, project.client, project.status, project.phase, project.priority, project.value, project.responsible, project.description]
-      );
+      await sql`
+        INSERT INTO projects ("name", "client", "status", "phase", "priority", "value", "responsibleId", "description") 
+        VALUES (${project.name}, ${project.client}, ${project.status}, ${project.phase}, ${project.priority}, ${project.value}, NULL, ${project.description})
+      `;
     }
     console.log(`✓ ${PROJECTS.length} projetos adicionados`);
 
     // Seed CRM Leads
     console.log('\n👥 Adicionando Leads...');
     for (const lead of LEADS) {
-      await connection.execute(
-        'INSERT INTO crm_leads (name, contact, email, status, value, responsible, diagnosis) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [lead.name, lead.contact, lead.email, lead.status, lead.value, lead.responsible, lead.diagnosis]
-      );
+      await sql`
+        INSERT INTO crm_leads ("name", "contact", "email", "status", "estimatedValue", "personInCharge", "description") 
+        VALUES (${lead.name}, ${lead.contact}, ${lead.email}, ${lead.status}, ${lead.value}, ${lead.responsible}, ${lead.diagnosis})
+      `;
     }
     console.log(`✓ ${LEADS.length} leads adicionados`);
 
     // Seed Financials
     console.log('\n💰 Adicionando Lançamentos Financeiros...');
     for (const financial of FINANCIALS) {
-      await connection.execute(
-        'INSERT INTO financials (type, description, amount, date, status, category) VALUES (?, ?, ?, ?, ?, ?)',
-        [financial.type, financial.description, financial.amount, financial.date, financial.status, financial.category]
-      );
+      await sql`
+        INSERT INTO financials ("type", "description", "amount", "date", "status", "category") 
+        VALUES (${financial.type}, ${financial.description}, ${financial.amount}, ${financial.date}, ${financial.status}, ${financial.category})
+      `;
     }
     console.log(`✓ ${FINANCIALS.length} lançamentos adicionados`);
 
     // Seed P&D Items
     console.log('\n🔬 Adicionando Itens de P&D...');
     for (const item of PND_ITEMS) {
-      await connection.execute(
-        'INSERT INTO pnd (provisionalName, internalCode, area, status, problemStatement, patentPotential, secretLevel, nextStep) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [item.provisionalName, item.internalCode, item.area, item.status, item.problemStatement, item.patentPotential, item.secretLevel, item.nextStep]
-      );
+      await sql`
+        INSERT INTO pnd ("provisionalName", "internalCode", "area", "status", "problemStatement", "patentPotential", "secretLevel", "nextStep") 
+        VALUES (${item.provisionalName}, ${item.internalCode}, ${item.area}, ${item.status}, ${item.problemStatement}, ${item.patentPotential}, ${item.secretLevel}, ${item.nextStep})
+      `;
     }
     console.log(`✓ ${PND_ITEMS.length} itens de P&D adicionados`);
 
     // Seed Rocket Missions
     console.log('\n🚀 Adicionando Missões Rocket...');
     for (const mission of ROCKET_MISSIONS) {
-      await connection.execute(
-        'INSERT INTO rocket (name, description, status, progress, startDate, expectedEndDate, lead, subsystems) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [mission.name, mission.description, mission.status, mission.progress, mission.startDate, mission.expectedEndDate, mission.lead, JSON.stringify(mission.subsystems)]
-      );
+      await sql`
+        INSERT INTO rocket_missions ("name", "description", "status", "responsibleId", "dueDate", "category") 
+        VALUES (${mission.name}, ${mission.description}, ${mission.status}, NULL, ${mission.expectedEndDate ? new Date(mission.expectedEndDate) : null}, 'Geral')
+      `;
     }
     console.log(`✓ ${ROCKET_MISSIONS.length} missões adicionadas`);
 
     // Seed Resources
     console.log('\n🔧 Adicionando Recursos...');
     for (const resource of RESOURCES) {
-      await connection.execute(
-        'INSERT INTO resources (name, type, status, location, description, lastMaintenance, nextMaintenance, defectDescription) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [resource.name, resource.type, resource.status, resource.location, resource.description, resource.lastMaintenance, resource.nextMaintenance, resource.defectDescription || null]
-      );
+      await sql`
+        INSERT INTO resources ("name", "category", "status", "location", "notes", "lastUsage") 
+        VALUES (${resource.name}, ${resource.type}, ${resource.status}, ${resource.location}, ${resource.description}, ${resource.lastMaintenance ? new Date(resource.lastMaintenance) : null})
+      `;
     }
     console.log(`✓ ${RESOURCES.length} recursos adicionados`);
 
     // Seed Trainings
     console.log('\n📚 Adicionando Treinamentos...');
     for (const training of TRAININGS) {
-      await connection.execute(
-        'INSERT INTO trainings (title, description, instructor, status, progress, startDate, endDate, participants, checklist) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [training.title, training.description, training.instructor, training.status, training.progress, training.startDate, training.endDate, JSON.stringify(training.participants), JSON.stringify(training.checklist)]
-      );
+      await sql`
+        INSERT INTO trainings ("title", "description", "instructor", "status") 
+        VALUES (${training.title}, ${training.description}, ${training.instructor}, ${training.status})
+      `;
     }
     console.log(`✓ ${TRAININGS.length} treinamentos adicionados`);
 
@@ -408,7 +407,7 @@ async function seedDatabase() {
     console.error('❌ Erro ao fazer seed:', error.message);
     process.exit(1);
   } finally {
-    if (connection) await connection.end();
+    await sql.end();
   }
 }
 

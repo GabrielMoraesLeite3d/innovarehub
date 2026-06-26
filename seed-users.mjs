@@ -1,18 +1,14 @@
-import mysql from 'mysql2/promise';
+import postgres from 'postgres';
 import crypto from 'crypto';
 
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
-const config = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'innovare_os',
-};
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/innovare_os';
 
 const INNOVARE_TEAM = [
+  { name: 'Gabriel Moraes', email: 'gabrielmoraesleite1@gmail.com', password: '1@2@3@4@5@Biel', role: 'admin' },
   { name: 'Gabriel', email: 'comercialinnovarehub@gmail.com', password: 'Innovare10#', role: 'admin' },
   { name: 'Larissa', email: 'larissa@innovare.com', password: 'Innovare10#', role: 'user' },
   { name: 'Nicolly', email: 'nicolly@innovare.com', password: 'Innovare10#', role: 'user' },
@@ -38,24 +34,28 @@ const ROCKET_TEAM = [
 ];
 
 async function seedUsers() {
-  let connection;
+  if (!process.env.DATABASE_URL) {
+    console.warn('⚠️  Nenhuma DATABASE_URL definida no ambiente. Usando fallback local para conexão.');
+  }
+
+  const sql = postgres(connectionString);
+
   try {
-    connection = await mysql.createConnection(config);
-    console.log('✓ Conectado ao banco de dados');
+    console.log('✓ Conectado ao banco de dados PostgreSQL');
 
     // Clear existing users
     console.log('\n🗑️  Limpando usuários existentes...');
-    await connection.execute('DELETE FROM local_users');
+    await sql`DELETE FROM local_users`;
     console.log('✓ Usuários removidos');
 
     // Seed Innovare Team
     console.log('\n👥 Adicionando Innovare Team (9 usuários)...');
     for (const user of INNOVARE_TEAM) {
       const passwordHash = hashPassword(user.password);
-      await connection.execute(
-        'INSERT INTO local_users (email, passwordHash, name, teamType, role, isActive) VALUES (?, ?, ?, ?, ?, ?)',
-        [user.email, passwordHash, user.name, 'innovare_team', user.role, 1]
-      );
+      await sql`
+        INSERT INTO local_users ("email", "passwordHash", "name", "teamType", "role", "isActive") 
+        VALUES (${user.email}, ${passwordHash}, ${user.name}, 'innovare_team', ${user.role}, 1)
+      `;
       console.log(`  ✓ ${user.email} (${user.role})`);
     }
     console.log(`✓ ${INNOVARE_TEAM.length} usuários da Innovare Team adicionados`);
@@ -64,10 +64,10 @@ async function seedUsers() {
     console.log('\n🚀 Adicionando Rocket Team (10 usuários)...');
     for (const user of ROCKET_TEAM) {
       const passwordHash = hashPassword(user.password);
-      await connection.execute(
-        'INSERT INTO local_users (email, passwordHash, name, teamType, role, isActive) VALUES (?, ?, ?, ?, ?, ?)',
-        [user.email, passwordHash, user.name, 'rocket_team', 'user', 1]
-      );
+      await sql`
+        INSERT INTO local_users ("email", "passwordHash", "name", "teamType", "role", "isActive") 
+        VALUES (${user.email}, ${passwordHash}, ${user.name}, 'rocket_team', 'user', 1)
+      `;
       console.log(`  ✓ ${user.email}`);
     }
     console.log(`✓ ${ROCKET_TEAM.length} usuários da Rocket Team adicionados`);
@@ -86,7 +86,7 @@ async function seedUsers() {
     console.error('❌ Erro ao fazer seed:', error.message);
     process.exit(1);
   } finally {
-    if (connection) await connection.end();
+    await sql.end();
   }
 }
 
