@@ -56,43 +56,21 @@ export default function DashboardLayout({
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
+  const [, setLocation] = useLocation();
   const { loading, user } = useAuth();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
 
-  if (loading) {
-    return <DashboardLayoutSkeleton />
-  }
+  useEffect(() => {
+    if (!loading && !user) {
+      setLocation("/login");
+    }
+  }, [loading, user, setLocation]);
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
-          <div className="flex flex-col items-center gap-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-orange-500 rounded-lg flex items-center justify-center">
-              <Rocket className="w-10 h-10 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-gradient text-center">
-              Innovare OS
-            </h1>
-            <p className="text-sm text-slate-400 text-center max-w-sm">
-              Sistema de gestão interna para a Innovare Hub. Faça login para continuar.
-            </p>
-          </div>
-          <Button
-            onClick={() => {
-              window.location.href = getLoginUrl();
-            }}
-            size="lg"
-            className="w-full shadow-lg hover:shadow-xl transition-all btn-cinema"
-          >
-            Entrar com Manus
-          </Button>
-        </div>
-      </div>
-    );
+  if (loading || !user) {
+    return <DashboardLayoutSkeleton />
   }
 
   return (

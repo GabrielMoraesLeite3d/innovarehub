@@ -1,11 +1,12 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { 
   getAllProjects, getProjectsByPhase, createProject, updateProject, getProjectTasks, createProjectTask, updateProjectTaskStatus, getCrmLeads, createCrmLead, updateCrmLead, updateCrmLeadStatus, createCrmInteraction, createCrmCommission, getFinancials, createFinancial, updateFinancialStatus, deleteFinancial, getResources, createResource, updateResource, deleteResource, createResourceAssignment, getAllEvents, createEvent, updateEventSchedule, deleteEvent, addEventParticipant, getEventParticipants,
   getTrainings, getPndItems, getRocketMissions, createRocketMission, updateRocketMission, getRocketSubsystems, updateRocketSubsystemProgress, getRocketTasks, createRocketTask, updateRocketTaskStatus, createRocketMessage, getRocketMessages, getRocketNotificationHistory, getCompetenciesByUser,
-  verifyLocalUserPassword, getAllLocalUsers, createLocalUser, deleteLocalUser
+  verifyLocalUserPassword, getAllLocalUsers, createLocalUser, deleteLocalUser, upsertUser
 } from "./db";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -23,12 +24,33 @@ export const appRouter = router({
     me: publicProcedure.query(opts => opts.ctx.user),
     login: publicProcedure
       .input(z.object({ email: z.string().email(), password: z.string() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const user = await verifyLocalUserPassword(input.email, input.password);
         
         if (!user) {
           throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Email ou senha inválidos' });
         }
+
+        // Sync local user to the main users table so authenticateRequest finds them
+        await upsertUser({
+          openId: user.email,
+          name: user.name || null,
+          email: user.email,
+          loginMethod: "local",
+          role: user.role,
+          teamType: user.teamType,
+          department: user.department || null,
+          jobTitle: user.jobTitle || null,
+          lastSignedIn: new Date(),
+        });
+
+        const sessionToken = await sdk.createSessionToken(user.email, {
+          name: user.name || "",
+          expiresInMs: ONE_YEAR_MS,
+        });
+
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
         return { 
           success: true, 
